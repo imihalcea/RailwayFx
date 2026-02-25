@@ -37,6 +37,7 @@ ScaffoldingReadMe.txt
 *.snupkg
 
 # IDE
+.idea/
 *.DotSettings.user
 
 # Others
