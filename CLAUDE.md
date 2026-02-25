@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RailwayFx is a C# library providing pragmatic functional programming effects (railway-oriented programming). The goal is a good trade-off between maintainability and performance. Targets .NET 10 with nullable reference types enabled.
+RailwayFx is a C# library providing railway-oriented programming primitives (`Result<T>`, `Error`). The goal is a good trade-off between maintainability and performance, with idiomatic C# over pure FP dogma.
 
 ## Build & Test Commands
 
@@ -18,13 +18,19 @@ dotnet test --filter "FullyQualifiedName~ClassName"  # Run tests in a class
 ## Architecture
 
 - **`src/`** — Main library (`RailwayFx`), .NET 10 class library
+  - `Error.cs` — Base `Error` record (Key, Message), designed for inheritance
+  - `Result.cs` — `Result<TValue>` type with Match, equality, implicit conversions
+  - `ResultExtensions.cs` — Sync extensions: Map, Bind, Tap, LINQ (Select/SelectMany), collection helpers, RInvoke, ThrowOnError
+  - `ResultExtensionsAsync.cs` — Async extensions on `Task<Result<T>>`: MatchAsync, MapAsync, BindAsync, TapAsync
 - **`tests/`** — Unit tests (`RailwayFx.Tests`), NUnit 4 with NUnit3TestAdapter
 
-Solution file: `RailwayFx.slnx` (new XML-based solution format).
+Solution file: `RailwayFx.slnx` (XML-based solution format).
 
-## Design Principles
+## Design Decisions
 
-- Favor `struct`-based types and zero-allocation patterns where possible for performance
-- Keep the API surface pragmatic — idiomatic C# over pure FP dogma
-- Nullable reference types are enabled; leverage the type system to prevent misuse at compile time
-- Target latest C# language features (`LangVersion latest` in tests)
+- `Result<T>` is a **class**, not a struct — simplifies equality with inheritance, avoids default-value pitfalls
+- `Result<T?>` is valid — `null` is a legitimate success value for nullable type parameters. No runtime guard on `Ok()`, relies on compiler nullable analysis
+- `Err()` has a runtime guard — `ArgumentNullException` if `null` error is passed
+- Async extensions avoid allocations on error paths: sync return via implicit conversion, no `Task.FromResult` wrappers or intermediate state machines
+- Sync `Map`/`Bind` use direct `if` branching instead of delegating through `Match` to avoid lambda allocations
+- Extensions on `object` are avoided (e.g., `RCast` was removed) to keep IntelliSense clean
