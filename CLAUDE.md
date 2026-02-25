@@ -20,9 +20,12 @@ dotnet test --filter "FullyQualifiedName~ClassName"  # Run tests in a class
 - **`src/`** — Main library (`RailwayFx`), .NET 10 class library
   - `Error.cs` — Base `Error` record (Key, Message), designed for inheritance
   - `Result.cs` — `Result<TValue>` type with Match, equality, implicit conversions
-  - `ResultExtensions.cs` — Sync extensions: Map, Bind, Tap, LINQ (Select/SelectMany), collection helpers, RInvoke, ThrowOnError
-  - `ResultExtensionsAsync.cs` — Async extensions on `Task<Result<T>>`: MatchAsync, MapAsync, BindAsync, TapAsync
+  - `ResultExtensions.cs` — Sync extensions: Map, Bind, Tap, LINQ (Select/SelectMany), collection helpers (Values, Errors, SeparateResults), RInvoke, ThrowOnError
+  - `ResultExtensionsAsync.cs` — Async extensions: MatchAsync, MapAsync, BindAsync, TapAsync — each available on both `Result<T>` (sync→async entry point) and `Task<Result<T>>` (pipeline chaining)
 - **`tests/`** — Unit tests (`RailwayFx.Tests`), NUnit 4 with NUnit3TestAdapter
+  - `ResultTests.cs` — Core type: construction, equality, operators, implicit conversions, guards, ToString
+  - `ResultExtensionTests.cs` — Sync extensions: Map, Bind, Tap, LINQ, collections, RInvoke, ThrowOnError
+  - `ResultExtensionsAsyncTest.cs` — Async extensions: all overloads on both `Result<T>` and `Task<Result<T>>`
 
 Solution file: `RailwayFx.slnx` (XML-based solution format).
 
@@ -33,4 +36,6 @@ Solution file: `RailwayFx.slnx` (XML-based solution format).
 - `Err()` has a runtime guard — `ArgumentNullException` if `null` error is passed
 - Async extensions avoid allocations on error paths: sync return via implicit conversion, no `Task.FromResult` wrappers or intermediate state machines
 - Sync `Map`/`Bind` use direct `if` branching instead of delegating through `Match` to avoid lambda allocations
+- Sync `Tap` success-only is inlined, not delegated to the two-callback overload, to avoid delegate allocation
 - Extensions on `object` are avoided (e.g., `RCast` was removed) to keep IntelliSense clean
+- Async extensions do not take `CancellationToken` — the caller controls cancellation via closures in callbacks
