@@ -59,6 +59,54 @@ public class ResultExtensionsAsyncTest
     }
     
     [Test]
+    public async Task should_map_async_from_sync_success_result()
+    {
+        var x = await Result<string>.Ok("a")
+            .MapAsync(async s => await DummySuccessAsync(s.ToUpper()));
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("A"));
+    }
+
+    [Test]
+    public async Task should_map_async_from_sync_error_result()
+    {
+        var x = await Result<string>.Err(new Error("err1", "error"))
+            .MapAsync(async s => await DummySuccessAsync(s.ToUpper()));
+        Assert.That(x.GetValueOrDefault(), Is.Null);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
+    [Test]
+    public async Task should_bind_async_from_sync_success_result()
+    {
+        var x = await Result<string>.Ok("1")
+            .BindAsync(async s => await SafeTryParse(s));
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo(1));
+        Assert.That(x.Error, Is.Null);
+    }
+
+    [Test]
+    public async Task should_bind_async_from_sync_error_result()
+    {
+        var x = await Result<string>.Err(new Error("err1", "error"))
+            .BindAsync(async s => await SafeTryParse(s));
+        Assert.That(x.GetValueOrDefault(), Is.Null);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
+    [Test]
+    public async Task should_chain_sync_result_into_full_async_pipeline()
+    {
+        var tapped = false;
+        var x = await Result<string>.Ok("a")
+            .MapAsync(async s => await DummySuccessAsync(s.ToUpper()))
+            .TapAsync(async _ => { await Task.CompletedTask; tapped = true; })
+            .BindAsync(async s => await SafeTryParseString(s));
+
+        Assert.That(tapped, Is.True);
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("A"));
+    }
+
+    [Test]
     public async Task should_tap_success_in_async_pipeline()
     {
         var tapped = false;
@@ -142,5 +190,10 @@ public class ResultExtensionsAsyncTest
 
         var error = MyTestError.Create("parseIntError", $"{value} is not an int");
         return Task.FromResult(Result<int?>.Err(error));
+    }
+
+    private Task<Result<string>> SafeTryParseString(string value)
+    {
+        return Task.FromResult(Result<string>.Ok(value));
     }
 }

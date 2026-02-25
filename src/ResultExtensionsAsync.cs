@@ -12,11 +12,23 @@ public static class ResultExtensionsAsync
             : await whenSuccess(result.Value!);
     }
 
+    public static async Task<Result<TResult>> MapAsync<TValue, TResult>(this Result<TValue> @this, Func<TValue, Task<TResult>> fnTransform)
+    {
+        if (@this.IsError) return @this.Error!;
+        return Result<TResult>.Ok(await fnTransform(@this.Value!));
+    }
+
     public static async Task<Result<TResult>> MapAsync<TValue, TResult>(this Task<Result<TValue>> @this, Func<TValue, Task<TResult>> fnTransform)
     {
         var result = await @this;
         if (result.IsError) return result.Error!;
         return Result<TResult>.Ok(await fnTransform(result.Value!));
+    }
+
+    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> @this, Func<TValue, Task<Result<TResult>>> fn)
+    {
+        if (@this.IsError) return @this.Error!;
+        return await fn(@this.Value!);
     }
 
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> @this, Func<TValue, Task<Result<TResult>>> fn)
