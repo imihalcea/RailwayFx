@@ -173,6 +173,16 @@ public static class ResultExtensions
         return @this;
     }
 
+    public static async Task<Result<TSource>> TapAsync<TSource>(this Task<Result<TSource>> @this, Func<TSource, Task> whenSuccess)
+    {
+        return await (await @this).TapAsync(whenSuccess);
+    }
+
+    public static async Task<Result<TSource>> TapAsync<TSource>(this Task<Result<TSource>> @this, Func<Error, Task> whenError, Func<TSource, Task> whenSuccess)
+    {
+        return await (await @this).TapAsync(whenError, whenSuccess);
+    }
+
     public static Result<TResult> Select<TValue, TResult>(this Result<TValue> @this, Func<TValue, TResult> fnTransform)
     {
         return @this.Map(fnTransform);

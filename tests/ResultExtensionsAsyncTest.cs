@@ -58,8 +58,59 @@ public class ResultExtensionsAsyncTest
         Assert.That(x.Error, Is.Null);
     }
     
-    
-    
+    [Test]
+    public async Task should_tap_success_in_async_pipeline()
+    {
+        var tapped = false;
+        var x = await ItReturnsSuccessResultOfAsync("a")
+            .MapAsync(async s => await DummySuccessAsync(s.ToUpper()))
+            .TapAsync(async _ => { await Task.CompletedTask; tapped = true; });
+
+        Assert.That(tapped, Is.True);
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("A"));
+    }
+
+    [Test]
+    public async Task should_not_tap_success_when_error_in_async_pipeline()
+    {
+        var tapped = false;
+        var x = await ItReturnsErrorResultAsync("err1", "error")
+            .TapAsync(async _ => { await Task.CompletedTask; tapped = true; });
+
+        Assert.That(tapped, Is.False);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
+    [Test]
+    public async Task should_tap_both_error_and_success_in_async_pipeline_when_success()
+    {
+        var errorTapped = false;
+        var successTapped = false;
+        var x = await ItReturnsSuccessResultOfAsync("a")
+            .TapAsync(
+                async _ => { await Task.CompletedTask; errorTapped = true; },
+                async _ => { await Task.CompletedTask; successTapped = true; });
+
+        Assert.That(errorTapped, Is.False);
+        Assert.That(successTapped, Is.True);
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("a"));
+    }
+
+    [Test]
+    public async Task should_tap_both_error_and_success_in_async_pipeline_when_error()
+    {
+        var errorTapped = false;
+        var successTapped = false;
+        var x = await ItReturnsErrorResultAsync("err1", "error")
+            .TapAsync(
+                async _ => { await Task.CompletedTask; errorTapped = true; },
+                async _ => { await Task.CompletedTask; successTapped = true; });
+
+        Assert.That(errorTapped, Is.True);
+        Assert.That(successTapped, Is.False);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
     private static Task<Result<string>> ItReturnsErrorResultAsync(string errorKey, string errorMessage)
     {
         var error = MyTestError.Create(errorKey, errorMessage);
