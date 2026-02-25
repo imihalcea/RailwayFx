@@ -159,6 +159,26 @@ public class ResultExtensionsAsyncTest
         Assert.That(x.Error!.Key, Is.EqualTo("err1"));
     }
 
+    [Test]
+    public async Task should_match_async_on_instance_when_success()
+    {
+        var result = Result<string>.Ok("hello");
+        var x = await result.MatchAsync(
+            whenError: err => Task.FromResult(err.Message),
+            whenSuccess: val => Task.FromResult(val.ToUpper()));
+        Assert.That(x, Is.EqualTo("HELLO"));
+    }
+
+    [Test]
+    public async Task should_match_async_on_instance_when_error()
+    {
+        var result = Result<string>.Err(new Error("err1", "error"));
+        var x = await result.MatchAsync(
+            whenError: err => Task.FromResult(err.Message),
+            whenSuccess: val => Task.FromResult(val.ToUpper()));
+        Assert.That(x, Is.EqualTo("error"));
+    }
+
     private static Task<Result<string>> ItReturnsErrorResultAsync(string errorKey, string errorMessage)
     {
         var error = MyTestError.Create(errorKey, errorMessage);

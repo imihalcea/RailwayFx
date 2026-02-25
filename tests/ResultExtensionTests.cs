@@ -41,7 +41,7 @@ public class ResultExtensionTests
     [Test]
     public void when_no_exception_is_raised_returns_a_success_result()
     {
-        var result = new Func<string>(() => "1" + "1").RInvoke(_ => null!);
+        var result = new Func<string>(() => "1" + "1").RInvoke(_ => new Error("unused", "unused"));
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.GetValueOrDefault(), Is.EqualTo("11"));
     }
@@ -68,6 +68,28 @@ public class ResultExtensionTests
         var r1 = Result<int>.Ok(42);
         var r2 = r1.ThrowOnError();
         Assert.That(ReferenceEquals(r1, r2), Is.True);
+    }
+
+    [Test]
+    public void should_tap_success_only_when_success()
+    {
+        var tapped = false;
+        var result = SuccessResultOf("a");
+        var resultAfterTap = result.Tap(_ => tapped = true);
+
+        Assert.That(tapped, Is.True);
+        Assert.That(result, Is.EqualTo(resultAfterTap));
+    }
+
+    [Test]
+    public void should_tap_success_only_when_error()
+    {
+        var tapped = false;
+        var result = ErrorResult("err1", "error");
+        var resultAfterTap = result.Tap(_ => tapped = true);
+
+        Assert.That(tapped, Is.False);
+        Assert.That(result, Is.EqualTo(resultAfterTap));
     }
 
     [Test]

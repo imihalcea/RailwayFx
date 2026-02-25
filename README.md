@@ -81,6 +81,16 @@ Result<OrderConfirmation> confirmation = await GetUserAsync(userId)
     .TapAsync(order => SendConfirmationAsync(order));
 ```
 
+`MapAsync` and `BindAsync` also work directly on a sync `Result<T>`, so you can enter an async pipeline without wrapping in `Task.FromResult`:
+
+```csharp
+Result<User> user = FindUser(userId);
+
+Result<Profile> profile = await user
+    .MapAsync(u => FetchProfileAsync(u))
+    .BindAsync(p => ValidateAsync(p));
+```
+
 Error paths are optimized: when a result is already in error state, async extensions skip the callback entirely — no `Task.FromResult` wrappers, no unnecessary allocations.
 
 ## LINQ support
