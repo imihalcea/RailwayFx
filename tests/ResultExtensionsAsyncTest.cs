@@ -160,6 +160,58 @@ public class ResultExtensionsAsyncTest
     }
 
     [Test]
+    public async Task should_tap_async_success_only_on_sync_result_when_success()
+    {
+        var tapped = false;
+        var result = Result<string>.Ok("a");
+        var x = await result.TapAsync(async _ => { await Task.CompletedTask; tapped = true; });
+
+        Assert.That(tapped, Is.True);
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("a"));
+    }
+
+    [Test]
+    public async Task should_tap_async_success_only_on_sync_result_when_error()
+    {
+        var tapped = false;
+        var result = Result<string>.Err(new Error("err1", "error"));
+        var x = await result.TapAsync(async _ => { await Task.CompletedTask; tapped = true; });
+
+        Assert.That(tapped, Is.False);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
+    [Test]
+    public async Task should_tap_async_both_on_sync_result_when_success()
+    {
+        var errorTapped = false;
+        var successTapped = false;
+        var result = Result<string>.Ok("a");
+        var x = await result.TapAsync(
+            async _ => { await Task.CompletedTask; errorTapped = true; },
+            async _ => { await Task.CompletedTask; successTapped = true; });
+
+        Assert.That(errorTapped, Is.False);
+        Assert.That(successTapped, Is.True);
+        Assert.That(x.GetValueOrDefault(), Is.EqualTo("a"));
+    }
+
+    [Test]
+    public async Task should_tap_async_both_on_sync_result_when_error()
+    {
+        var errorTapped = false;
+        var successTapped = false;
+        var result = Result<string>.Err(new Error("err1", "error"));
+        var x = await result.TapAsync(
+            async _ => { await Task.CompletedTask; errorTapped = true; },
+            async _ => { await Task.CompletedTask; successTapped = true; });
+
+        Assert.That(errorTapped, Is.True);
+        Assert.That(successTapped, Is.False);
+        Assert.That(x.Error!.Key, Is.EqualTo("err1"));
+    }
+
+    [Test]
     public async Task should_match_async_on_instance_when_success()
     {
         var result = Result<string>.Ok("hello");
