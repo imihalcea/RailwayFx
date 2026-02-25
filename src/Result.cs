@@ -7,6 +7,7 @@ public class Result<TValue> : IEquatable<Result<TValue>>
 {
     private Result(Error error)
     {
+        ArgumentNullException.ThrowIfNull(error);
         Error = error;
         Value = default;
     }

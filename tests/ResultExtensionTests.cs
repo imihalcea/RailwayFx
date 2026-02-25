@@ -176,6 +176,38 @@ public class ResultExtensionTests
 
 
     [Test]
+    public void values_should_return_success_values()
+    {
+        var results = new[]
+        {
+            SuccessResultOf("x"),
+            ErrorResult("a", "a"),
+            SuccessResultOf("y"),
+            ErrorResult("b", "b")
+        };
+
+        Assert.That(results.Values(), Is.EquivalentTo(new[] { "x", "y" }));
+    }
+
+    [Test]
+    public void errors_should_return_error_values()
+    {
+        var results = new[]
+        {
+            SuccessResultOf("x"),
+            ErrorResult("a", "a"),
+            SuccessResultOf("y"),
+            ErrorResult("b", "b")
+        };
+
+        Assert.That(results.Errors(), Is.EquivalentTo(new[]
+        {
+            MyTestError.Create("a", "a"),
+            MyTestError.Create("b", "b")
+        }));
+    }
+
+    [Test]
     public void separate_result()
     {
         var results = new[]
