@@ -116,31 +116,36 @@ public static class ResultExtensions
     public static async Task<TResult> MatchAsync<TValue, TResult>(this Task<Result<TValue>> @this, Func<Error, Task<TResult>> whenError,
         Func<TValue, Task<TResult>> whenSuccess)
     {
-        return await (await @this).MatchAsync(whenError, whenSuccess);
+        var result = await @this;
+        return result.IsError
+            ? await whenError(result.Error!)
+            : await whenSuccess(result.Value!);
     } 
 
     public static Result<TResult> Map<TValue, TResult>(this Result<TValue> @this, Func<TValue, TResult> fnTransform)
     {
-        return @this.Match(Result<TResult>.Err, value => fnTransform(value));
+        if (@this.IsError) return @this.Error!;
+        return fnTransform(@this.Value!);
     }
 
     public static async Task<Result<TResult>> MapAsync<TValue, TResult>(this Task<Result<TValue>> @this, Func<TValue, Task<TResult>> fnTransform)
     {
-        return await @this.MatchAsync(
-            whenError: err => Task.FromResult(Result<TResult>.Err(err)),
-            whenSuccess: async value => Result<TResult>.Ok(await fnTransform(value)));
+        var result = await @this;
+        if (result.IsError) return result.Error!;
+        return Result<TResult>.Ok(await fnTransform(result.Value!));
     }
     
     public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> @this, Func<TValue, Result<TResult>> fn)
     {
-        return @this.Match(Result<TResult>.Err, fn);
+        if (@this.IsError) return @this.Error!;
+        return fn(@this.Value!);
     }
 
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> @this, Func<TValue, Task<Result<TResult>>> fn)
     {
-        return await @this.MatchAsync(
-            whenError: err => Task.FromResult(Result<TResult>.Err(err)),
-            whenSuccess:fn);
+        var result = await @this;
+        if (result.IsError) return result.Error!;
+        return await fn(result.Value!);
     }
 
     public static Result<TSource> Tap<TSource>(this Result<TSource> @this, Action<TSource> whenSuccess)
@@ -150,7 +155,8 @@ public static class ResultExtensions
 
     public static async Task<Result<TSource>> TapAsync<TSource>(this Result<TSource> @this, Func<TSource, Task> whenSuccess)
     {
-        return await @this.TapAsync(_ =>  Task.CompletedTask , whenSuccess);
+        if (@this.IsSuccess) await whenSuccess(@this.Value!);
+        return @this;
     }
     
     public static Result<TSource> Tap<TSource>(this Result<TSource> @this, Action<Error> whenError,
@@ -175,12 +181,17 @@ public static class ResultExtensions
 
     public static async Task<Result<TSource>> TapAsync<TSource>(this Task<Result<TSource>> @this, Func<TSource, Task> whenSuccess)
     {
-        return await (await @this).TapAsync(whenSuccess);
+        var result = await @this;
+        if (result.IsSuccess) await whenSuccess(result.Value!);
+        return result;
     }
 
     public static async Task<Result<TSource>> TapAsync<TSource>(this Task<Result<TSource>> @this, Func<Error, Task> whenError, Func<TSource, Task> whenSuccess)
     {
-        return await (await @this).TapAsync(whenError, whenSuccess);
+        var result = await @this;
+        if (result.IsError) await whenError(result.Error!);
+        if (result.IsSuccess) await whenSuccess(result.Value!);
+        return result;
     }
 
     public static Result<TResult> Select<TValue, TResult>(this Result<TValue> @this, Func<TValue, TResult> fnTransform)
