@@ -93,6 +93,27 @@ Result<Profile> profile = await user
 
 Error paths are optimized: when a result is already in error state, async extensions skip the callback entirely — no `Task.FromResult` wrappers, no unnecessary allocations.
 
+### Cancellation
+
+RailwayFx async extensions do not take a `CancellationToken` parameter. They perform no I/O themselves — they orchestrate callbacks provided by the caller. The caller controls cancellation through closures:
+
+```csharp
+await GetUserAsync(userId, ct)
+    .MapAsync(u => EnrichAsync(u, ct))
+    .BindAsync(u => SaveAsync(u, ct));
+```
+
+Each callback receives the token via capture and is responsible for honoring it. This keeps the library's API surface clean and avoids threading an extra parameter through every method for marginal benefit.
+
+A future evolution could introduce a pipeline-level cancellation check between steps, avoiding entry into the next callback when the token is already cancelled:
+
+```csharp
+await result
+    .WithCancellation(token)
+    .MapAsync(u => StepAsync(u))
+    .BindAsync(u => SaveAsync(u));
+```
+
 ## LINQ support
 
 `Result<T>` implements `Select` and `SelectMany`, so you can use query syntax when combining multiple results.
