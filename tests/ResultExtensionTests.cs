@@ -39,24 +39,6 @@ public class ResultExtensionTests
 
 
     [Test]
-    public void when_cast_succeeds_returns_a_success_result()
-    {
-        object x = "foo";
-        var result = x.RCast<string>();
-        Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.GetValueOrDefault(), Is.EqualTo("foo"));
-    }
-
-    [Test]
-    public void when_cast_fails_returns_an_error_result()
-    {
-        object x = 23;
-        var result = x.RCast<string>();
-        Assert.That(result.IsError, Is.True);
-        Assert.That(result.Error!.Message, Is.EqualTo("Int32 cannot be cast into String"));
-    }
-
-    [Test]
     public void when_no_exception_is_raised_returns_a_success_result()
     {
         var result = new Func<string>(() => "1" + "1").RInvoke(_ => null!);

@@ -245,15 +245,6 @@ public static class ResultExtensions
         return (errors, outcome);
     }
 
-    public static Result<T> RCast<T>(this object source)
-    {
-        if (source is T sourceAsT)
-            return Result<T>.Ok(sourceAsT);
-
-        return Result<T>.Err(new Error("Invalid cast",
-            $"{source.GetType().Name} cannot be cast into {typeof(T).Name}"));
-    }
-
     public static Result<T> RInvoke<T>(this Func<T> f, Func<Exception, Error> errorFunc)
     {
         try
