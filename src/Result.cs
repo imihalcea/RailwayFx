@@ -5,14 +5,15 @@ public record Error(string Key, string Message);
 
 public class Result<TValue> : IEquatable<Result<TValue>>
 {
-    private Result(Error exception)
+    private Result(Error error)
     {
-        Error = exception;
+        Error = error;
         Value = default;
     }
 
     private Result(TValue value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         Error = null;
         Value = value;
     }
@@ -150,7 +151,8 @@ public static class ResultExtensions
 
     public static Result<TSource> Tap<TSource>(this Result<TSource> @this, Action<TSource> whenSuccess)
     {
-        return @this.Tap(_ => { }, whenSuccess);
+        if (@this.IsSuccess) whenSuccess(@this.Value!);
+        return @this;
     }
 
     public static async Task<Result<TSource>> TapAsync<TSource>(this Result<TSource> @this, Func<TSource, Task> whenSuccess)
@@ -211,9 +213,9 @@ public static class ResultExtensions
         return @this.Bind(t => fn(t).Bind<TResult, TResult2>(u => comp(t, u)));
     }
 
-    public static IEnumerable<T?> Values<T>(this IEnumerable<Result<T>> @this)
+    public static IEnumerable<T> Values<T>(this IEnumerable<Result<T>> @this)
     {
-        return @this.Where(r => r.IsSuccess).Select(r => r.Value);
+        return @this.Where(r => r.IsSuccess).Select(r => r.Value!);
     }
 
     public static IEnumerable<Error> Errors<T>(this IEnumerable<Result<T>> @this)
@@ -222,11 +224,11 @@ public static class ResultExtensions
     }
 
 
-    public static (IEnumerable<Error> errors, IEnumerable<T?> outcome) SeparateResults<T>(
+    public static (IEnumerable<Error> errors, IEnumerable<T> outcome) SeparateResults<T>(
         this IEnumerable<Result<T>> results)
     {
         var errors = new List<Error>();
-        var outcome = new List<T?>();
+        var outcome = new List<T>();
         foreach (var result in results)
         {
             if (result.IsError)
@@ -235,7 +237,7 @@ public static class ResultExtensions
             }
             else
             {
-                outcome.Add(result.GetValueOrDefault());
+                outcome.Add(result.Value!);
             }
         }
 
