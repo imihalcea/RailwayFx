@@ -12,7 +12,6 @@ public class Result<TValue> : IEquatable<Result<TValue>>
 
     private Result(TValue value)
     {
-        ArgumentNullException.ThrowIfNull(value);
         Error = null;
         Value = value;
     }

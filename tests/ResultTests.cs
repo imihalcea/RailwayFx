@@ -136,9 +136,11 @@ public class ResultTests
     }
 
     [Test]
-    public void ok_should_throw_when_value_is_null()
+    public void ok_should_accept_null_for_nullable_types()
     {
-        Assert.Throws<ArgumentNullException>(() => Result<string>.Ok(null!));
+        var result = Result<string?>.Ok(null);
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Value, Is.Null);
     }
 
     [Test]
@@ -164,9 +166,11 @@ public class ResultTests
     }
 
     [Test]
-    public void implicit_conversion_from_null_value_should_throw()
+    public void implicit_conversion_from_null_value_should_create_success()
     {
-        Assert.Throws<ArgumentNullException>(() => { Result<string> _ = (string)null!; });
+        Result<string?> result = (string?)null;
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Value, Is.Null);
     }
 
     [Test]
