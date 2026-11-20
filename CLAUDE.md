@@ -17,7 +17,7 @@ dotnet test --filter "FullyQualifiedName~ClassName"  # Run tests in a class
 
 ## Architecture
 
-- **`src/`** — Main library (`RailwayFx`), .NET 10 class library
+- **`src/`** — Main library (`RailwayFx`), .NET 11 class library
   - `Error.cs` — Base `Error` record (Key, Message), designed for inheritance
   - `Result.cs` — `Result<TValue>` type with Match, equality, implicit conversions
   - `ResultExtensions.cs` — Sync extensions: Map, Bind, Tap, LINQ (Select/SelectMany), collection helpers (Values, Errors, SeparateResults), RInvoke, ThrowOnError

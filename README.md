@@ -167,7 +167,7 @@ Result<Config> config = new Func<Config>(() => LoadConfig())
 
 ## Requirements
 
-- .NET 10+
+- .NET 11+
 - C# with nullable reference types enabled
 
 ## License
